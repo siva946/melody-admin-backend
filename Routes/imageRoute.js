@@ -5,6 +5,9 @@ import upload from "../Middleware/upload.js";
 
 const router = express.Router();
 
+router.options('/', (req, res) => {
+  res.status(200).end();
+});
 // Public: get images
 router.get("/", async (req, res) => {
   const images = await Image.find().sort({ order: 1 });

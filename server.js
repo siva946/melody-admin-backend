@@ -12,7 +12,8 @@ const app = express();
 
 app.use(cors({
 	origin: 'https://melody-admin-login.vercel.app',
-	methods: ['GET', 'POST', 'PUT', 'DELETE'],
+	methods: ['GET', 'POST', 'PUT', 'DELETE','OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
 	credentials: true
 }));
 app.use(express.json());

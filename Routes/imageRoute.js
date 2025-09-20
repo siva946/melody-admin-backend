@@ -9,16 +9,20 @@ router.options('/', (req, res) => {
   res.status(200).end();
 });
 // Public: get images
-router.get("/", async (req, res) => {
-  const images = await Image.find().sort({ order: 1 });
-  res.json(images);
+router.get("/", async (req, res, next) => {
+  try {
+    const images = await Image.find().sort({ order: 1 });
+    res.json(images);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Admin: upload
 router.post("/admin", auth, upload.single("image"), async (req, res) => {
   const image = new Image({
     url: `/uploads/${req.file.filename}`,
-    title: req.body.title,
+    title: req.body.title || 'Untitled',
     order: Date.now()
   });
   await image.save();

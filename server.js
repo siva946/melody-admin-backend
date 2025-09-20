@@ -20,8 +20,13 @@ app.use(express.json());
 app.use("/uploads", express.static("/tmp"));
 
 connectDB();
-SeedingUser();
+if (process.env.NODE_ENV !== 'production') {
+  SeedingUser();
+}
 
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to Melody Admin Backend' });
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/images", imageRoutes);

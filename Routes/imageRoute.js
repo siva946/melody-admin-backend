@@ -1,7 +1,7 @@
 import express from "express";
 import Image from "../Models/Image.js";
 import auth from "../Middleware/auth.js";
-import upload from "../Middleware/upload.js";
+import upload, { uploadToBlob } from "../Middleware/upload.js";
 
 const router = express.Router();
 
@@ -19,14 +19,25 @@ router.get("/", async (req, res, next) => {
 });
 
 // Admin: upload
-router.post("/admin", auth, upload.single("image"), async (req, res) => {
-  const image = new Image({
-    url: `/uploads/${req.file.filename}`,
-    title: req.body.title || 'Untitled',
-    order: Date.now()
-  });
-  await image.save();
-  res.json(image);
+router.post("/admin", auth, upload.single("image"), uploadToBlob, async (req, res) => {
+  try {
+    // Use the blob URL from Vercel Blob
+    const image = new Image({
+      url: req.blobUrl,
+      title: req.body.title || 'Untitled',
+      order: Date.now()
+    });
+
+    await image.save();
+    console.log('Image uploaded successfully:', req.blobUrl);
+    res.json(image);
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).json({
+      message: 'Failed to upload image',
+      error: error.message
+    });
+  }
 });
 
 // Admin: reorder

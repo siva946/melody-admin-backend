@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import multer from "multer";
 import connectDB from "./configuration/database.js";
 import authRoutes from "./Routes/authRoute.js";
 import imageRoutes from "./Routes/imageRoute.js";
@@ -17,7 +18,8 @@ app.use(cors({
 	credentials: true
 }));
 app.use(express.json());
-app.use("/uploads", express.static("/tmp"));
+// Static file serving removed - files are now stored in Vercel Blob
+// app.use("/uploads", express.static("/tmp")); // ❌ REMOVE THIS LINE
 
 connectDB();
 if (process.env.NODE_ENV !== 'production') {
@@ -32,8 +34,40 @@ app.use("/api/auth", authRoutes);
 app.use("/api/images", imageRoutes);
 
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Internal Server Error', error: err.message });
+  console.error('Global error handler:', err.stack);
+  console.error('Request details:', {
+    method: req.method,
+    url: req.url,
+    body: req.body,
+    headers: req.headers
+  });
+
+  // Handle multer errors specifically
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        message: 'File too large. Maximum size is 5MB.',
+        error: err.message
+      });
+    }
+    return res.status(400).json({
+      message: 'File upload error',
+      error: err.message
+    });
+  }
+
+  // Handle custom errors
+  if (err.message && err.message.includes('Only images allowed')) {
+    return res.status(400).json({
+      message: err.message
+    });
+  }
+
+  res.status(500).json({
+    message: 'Internal Server Error',
+    error: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
 });
 
 const PORT = process.env.PORT || 5000;
